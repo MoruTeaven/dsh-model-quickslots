@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@moruteaven/dsh-model-quickslots':
+        specifier: link:F:/Code/OpenSource/dsh/dsh-model-quickslots
+        version: 'link:'
       react:
         specifier: ^18.2.0
         version: 18.3.1

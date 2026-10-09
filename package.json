@@ -30,7 +30,8 @@
     "test": "esbuild src/self-test.ts --bundle --format=esm --platform=node --outfile=lib/self-test.mjs && node lib/self-test.mjs"
   },
   "files": [
-    "lib"
+    "lib/client.js",
+    "lib/index.js"
   ],
   "license": "MIT",
   "author": "抹露茶柒 (MoruTeaven) <me@MoruTeaven.com> (www.MoruTeaven.com)",
@@ -47,11 +48,14 @@
     "presets"
   ],
   "devDependencies": {
+    "@types/react": "~18.3.1",
     "esbuild": "^0.24.0",
-    "typescript": "^5.7.0",
-    "@types/react": "~18.3.1"
+    "typescript": "^5.7.0"
   },
   "peerDependencies": {
     "react": "^18.2.0"
+  },
+  "dependencies": {
+    "@moruteaven/dsh-model-quickslots": "link:F:/Code/OpenSource/dsh/dsh-model-quickslots"
   }
 }

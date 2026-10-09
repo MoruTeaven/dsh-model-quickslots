@@ -16,13 +16,17 @@
 
 ## 安装
 
-### 方式一：从 npm 安装（正式版发布后）
+### 从私有库安装（dev 版本）
 
 ```bash
-pnpm add @moruteaven/dsh-model-quickslots
+# 配置 .npmrc（同组织 token 通用）
+# @moruteaven:registry=https://packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/
+# //packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/:_authToken=<your-token>
+
+pnpm add @moruteaven/dsh-model-quickslots --registry=https://packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/
 ```
 
-### 方式二：从源码构建
+### 从源码构建
 
 ```bash
 git clone https://github.com/MoruTeaven/dsh-model-quickslots.git
@@ -31,9 +35,6 @@ pnpm install
 pnpm build
 ```
 
-### 方式三：从 Git 安装
-
-在 DSH 的插件管理页面中，输入本仓库的 Git 地址进行安装。
 
 ## 在 DSH 中启用
 
