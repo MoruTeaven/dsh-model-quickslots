@@ -1,6 +1,6 @@
 {
   "name": "@moruteaven/dsh-model-quickslots",
-  "version": "0.1.0-dev.1",
+  "version": "0.1.0-dev.2",
   "description": "在 DSH 输入框上方添加一排模型快捷切换按钮，每个按钮对应一套预设配置（提供方 + 模型 + 思考强度）",
   "type": "module",
   "main": "lib/index.js",
@@ -21,6 +21,9 @@
         "@deepseek-ai/dsh-client-ui-conversation"
       ],
       "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "scripts": {
@@ -31,7 +34,8 @@
   },
   "files": [
     "lib/client.js",
-    "lib/index.js"
+    "lib/index.js",
+    "cordis.patch.yml"
   ],
   "license": "MIT",
   "author": "抹露茶柒 (MoruTeaven) <me@MoruTeaven.com> (www.MoruTeaven.com)",

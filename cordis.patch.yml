@@ -1,0 +1,5 @@
+# @moruteaven/dsh-model-quickslots — bundle patch.
+# dsh.bundle.patch is mandatory for packages listed in dsh.profile.bundles.
+- insert:
+    - id: model-quickslots
+      name: "@moruteaven/dsh-model-quickslots"
