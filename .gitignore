@@ -1,0 +1,9 @@
+node_modules/
+lib/
+*.tsbuildinfo
+.DS_Store
+# Windows system cache artifacts
+%SystemDrive%/
+
+# Mnemon runtime
+.mnemon/
