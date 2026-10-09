@@ -1,6 +1,6 @@
 {
   "name": "@moruteaven/dsh-model-quickslots",
-  "version": "0.1.0-dev.2",
+  "version": "0.1.0-dev.3",
   "description": "在 DSH 输入框上方添加一排模型快捷切换按钮，每个按钮对应一套预设配置（提供方 + 模型 + 思考强度）",
   "type": "module",
   "main": "lib/index.js",
@@ -58,8 +58,5 @@
   },
   "peerDependencies": {
     "react": "^18.2.0"
-  },
-  "dependencies": {
-    "@moruteaven/dsh-model-quickslots": "link:F:/Code/OpenSource/dsh/dsh-model-quickslots"
   }
 }
