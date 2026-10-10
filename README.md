@@ -19,6 +19,12 @@ A row of one-click model preset buttons for the [DeepSeek Harness](https://githu
 - **Local persistence** — presets are stored in the browser's `localStorage`; no account or sync service involved.
 - **Theme aware** — styled with DSH theme variables, so it follows light and dark themes.
 
+## Demo
+
+Left-click a preset to switch the current session's model:
+
+![One-click model switching](docs/quick-switch.gif)
+
 ## Screenshots
 
 Preset buttons sit right above the composer, aligned with the input card:
