@@ -1,32 +1,39 @@
 # dsh-model-quickslots
 
-在 DeepSeek Harness (DSH) 输入框上方添加一排模型快捷切换按钮。每个按钮对应一套预设配置（提供方 + 模型 + 思考强度），左键点击即可快速切换当前会话模型，右键点击可打开编辑弹窗修改预设。
+**English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
 
-## 功能
+[![npm](https://img.shields.io/npm/v/@moruteaven/dsh-model-quickslots?color=4f46e5)](https://www.npmjs.com/package/@moruteaven/dsh-model-quickslots)
+[![license](https://img.shields.io/npm/l/@moruteaven/dsh-model-quickslots?color=4f46e5)](./LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-plugin-4f46e5)](https://github.com/deepseek-ai)
 
-- **快捷切换**：左键点击预设按钮，一键切换当前会话的模型和思考强度
-- **自定义备注**：每个预设可以设置自定义名称，不一定必须用模型名
-- **右键编辑**：右键点击按钮打开编辑弹窗，可修改预设的提供方、模型、思考强度和备注
-- **模型目录联动**：编辑弹窗中的提供方、模型、思考强度下拉列表自动读取当前会话可用的模型目录
-- **本地持久化**：预设保存在浏览器 localStorage，无需额外配置
+A row of one-click model preset buttons for the [DeepSeek Harness](https://github.com/deepseek-ai) (DSH) composer. Each button is a saved preset — provider + model + reasoning effort. **Left-click** switches the current session's model; **right-click** opens the editor.
 
-## 截图
+## Features
 
-*(待补充)*
+- **One-click switching** — left-click a preset to switch the current session's model and reasoning effort.
+- **Custom labels** — every preset can carry its own name, so it does not have to read like a model id. Name one "Fast" and another "Deep thinking".
+- **Right-click to edit** — right-click any preset to change its provider, model, effort, or label.
+- **Live model catalog** — the editor's dropdowns are populated from the models actually available to the current session. No hardcoded model list.
+- **Active preset highlight** — the preset matching the session's current model is outlined.
+- **Failure feedback** — a preset whose switch fails turns red instead of failing silently.
+- **Local persistence** — presets are stored in the browser's `localStorage`; no account or sync service involved.
+- **Theme aware** — styled with DSH theme variables, so it follows light and dark themes.
 
-## 安装
+## Installation
 
-### 从私有库安装（dev 版本）
+### From npm (recommended)
 
 ```bash
-# 配置 .npmrc（同组织 token 通用）
-# @moruteaven:registry=https://packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/
-# //packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/:_authToken=<your-token>
-
-pnpm add @moruteaven/dsh-model-quickslots --registry=https://packages.aliyun.com/631c7575050e9c4a07a99328/npm/dsh-model-quickslots/
+pnpm add @moruteaven/dsh-model-quickslots
 ```
 
-### 从源码构建
+Then add the package to your profile's `dsh.profile.bundles` list and restart DSH.
+
+### Via the DSH plugin manager
+
+Open **Settings → Plugins**, search for `@moruteaven/dsh-model-quickslots`, and install it.
+
+### From source
 
 ```bash
 git clone https://github.com/MoruTeaven/dsh-model-quickslots.git
@@ -35,31 +42,34 @@ pnpm install
 pnpm build
 ```
 
+## Usage
 
-## 在 DSH 中启用
+| Action | Result |
+| --- | --- |
+| **Left-click** a preset | Switch the session to that preset's model configuration |
+| **Right-click** a preset | Open the editor for that preset |
+| Click **+** | Create a new preset |
+| Press **Esc** | Close the editor |
+| Press **Ctrl/Cmd + Enter** | Save the preset |
 
-1. 打开 DSH 设置 → 插件页面
-2. 找到 `@moruteaven/dsh-model-quickslots`
-3. 启用该插件
-4. 刷新页面后，输入框上方将出现快捷按钮栏
+When you have no presets yet, the row shows a single **Model presets** entry — click it to create your first one.
 
-## 使用方法
+The button row sits directly above the composer and lines up with the input card's right edge.
 
-- **左键点击**按钮 → 切换到该预设的模型配置
-- **右键点击**按钮 → 打开编辑弹窗
-- 点击 **+** 按钮 → 添加新预设（还没有任何预设时，按钮显示为「模型预设」）
+## Development
 
-## 技术细节
+```bash
+pnpm build   # bundle lib/client.js (browser half) and lib/index.js (host half)
+pnpm dev     # rebuild on change
+pnpm test    # run the self-test suite
+```
 
-- 纯客户端 Web 插件，注册到 `conversation.input.dock` 扩展位
-- 模型切换复用 DSH 内置的模型目录服务（`modelDirectories`），与内置模型选择器行为一致
-- 图标使用 [Lucide](https://lucide.dev)（ISC 协议）的 SVG 路径
-- 样式使用 DSH 主题 CSS 变量，自动适配亮/暗主题
+The plugin is a pure client-side Web plugin registered into the `conversation.input.dock` slot. Model switching goes through DSH's own model-directory service, so it behaves exactly like the built-in model picker — including its availability rules and race handling.
 
-## 许可证
+## License
 
 [MIT](./LICENSE)
 
-## 作者
+## Author
 
 抹露茶柒 (MoruTeaven) — me@MoruTeaven.com — www.MoruTeaven.com

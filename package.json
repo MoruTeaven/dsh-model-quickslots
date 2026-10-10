@@ -1,7 +1,7 @@
 {
   "name": "@moruteaven/dsh-model-quickslots",
-  "version": "0.1.0-dev.5",
-  "description": "在 DSH 输入框上方添加一排模型快捷切换按钮，每个按钮对应一套预设配置（提供方 + 模型 + 思考强度）",
+  "version": "1.0.0",
+  "description": "One-click model preset buttons for the DeepSeek Harness (DSH) composer — switch provider, model and reasoning effort instantly.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -46,10 +46,16 @@
   "keywords": [
     "dsh",
     "deepseek-harness",
+    "deepseek",
     "plugin",
+    "dsh-plugin",
     "model",
-    "quickswitch",
-    "presets"
+    "model-switcher",
+    "model-presets",
+    "reasoning-effort",
+    "quick-switch",
+    "composer",
+    "web"
   ],
   "devDependencies": {
     "@types/react": "~18.3.1",
@@ -58,5 +64,6 @@
   },
   "peerDependencies": {
     "react": "^18.2.0"
-  }
+  },
+  "homepage": "https://github.com/MoruTeaven/dsh-model-quickslots#readme"
 }
