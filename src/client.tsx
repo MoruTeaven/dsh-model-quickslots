@@ -13,25 +13,34 @@ const inject = ["sessions", "slots", "modelDirectories"];
 const SLOT_KEY = "conversation.input.dock";
 /** This plugin's entry id inside that list slot. */
 const ENTRY_ID = "model-quickslots";
-/** Crash-loop guard: at most this many revives inside one stable window. */
+/** Re-registration guard: at most this many revives inside one stable window. */
 const MAX_REVIVES_PER_WINDOW = 3;
-/** Surviving this long without another crash restores the revive budget. */
+/** Surviving this long without another revive restores the revive budget. */
 const DEFAULT_STABLE_WINDOW_MS = 10_000;
+/** A crashed entry is replaced promptly; a failed directory lookup gets a beat. */
+const CRASH_REVIVE_DELAY_MS = 0;
+const UNRESOLVED_REVIVE_DELAY_MS = 1_000;
 
 /**
- * The stable-window length. Overridable only so tests can exercise the reset
- * without waiting ten seconds; absent in the browser, so the default stands.
+ * Timing overrides. Present only so tests can exercise the paths without
+ * waiting real seconds; absent in the browser, so the defaults stand.
  */
-function stableWindowMs(): number {
-  const override = (globalThis as any).__DSH_MQS_STABLE_WINDOW_MS__;
-  return typeof override === "number" && override >= 0 ? override : DEFAULT_STABLE_WINDOW_MS;
+function timing() {
+  const overrides = (globalThis as any).__DSH_MQS_TIMING__ ?? {};
+  const num = (value: unknown, fallback: number) =>
+    typeof value === "number" && value >= 0 ? value : fallback;
+  return {
+    stableWindowMs: num(overrides.stableWindowMs, DEFAULT_STABLE_WINDOW_MS),
+    crashDelayMs: num(overrides.crashDelayMs, CRASH_REVIVE_DELAY_MS),
+    unresolvedDelayMs: num(overrides.unresolvedDelayMs, UNRESOLVED_REVIVE_DELAY_MS),
+  };
 }
 
 function apply(ctx: any) {
   const sessions = ctx.sessions;
   const models = ctx.modelDirectories;
 
-  const register = () =>
+  const register = (onUnresolved: () => void) =>
     ctx.slots.register(
       {
         name: SLOT_KEY,
@@ -42,61 +51,81 @@ function apply(ctx: any) {
             (id) => models.directoryFor(id),
             (id) => sessions.subagentAddress(id) !== undefined,
             sessionId,
+            onUnresolved,
           ),
       },
       QuickSlots,
     );
 
   ctx.slots.inject(SLOT_KEY, () => {
-    let dispose = register();
+    let dispose: () => void = () => {};
     let revives = 0;
+    let pending = false;
     let stableTimer: ReturnType<typeof setTimeout> | undefined;
+    let reviveTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // A list-slot entry that crashes is retired for the whole page lifetime
-    // (abdication has no recovery path), which is why the row used to stay gone
-    // until the plugin was toggled off and on. Re-register a fresh entry so an
-    // occasional crash heals itself.
+    // Two failure modes lead here, and both used to require toggling the plugin
+    // off and on:
     //
-    // The budget is per stable window, not cumulative: a one-off fault (a cold
-    // boot race, a plugin reload tearing scopes down) heals and then forgets,
-    // while a genuine crash loop still stops after MAX_REVIVES_PER_WINDOW tries
-    // instead of spinning forever.
+    //  1. The entry crashed while rendering. The renderer retires ("abdicates")
+    //     a crashed list-slot entry with no recovery path, so the row vanished
+    //     for the rest of the page.
+    //  2. Resolving the session's model directory failed, so the entry fell back
+    //     to inert props — and inject results are cached per session binding, so
+    //     it never got another chance.
+    //
+    // Re-registering the entry fixes both: a fresh entry re-runs inject against
+    // a freshly resolved directory. The budget is per stable window, not
+    // cumulative, so a one-off fault heals and then forgets while a genuine
+    // loop still stops after MAX_REVIVES_PER_WINDOW tries.
     const armStableWindow = () => {
       if (stableTimer !== undefined) clearTimeout(stableTimer);
       stableTimer = setTimeout(() => {
         stableTimer = undefined;
         revives = 0;
-      }, stableWindowMs());
+      }, timing().stableWindowMs);
     };
+
+    const revive = (delayMs: number) => {
+      if (pending || revives >= MAX_REVIVES_PER_WINDOW) return;
+      pending = true;
+      revives += 1;
+      if (stableTimer !== undefined) {
+        clearTimeout(stableTimer);
+        stableTimer = undefined;
+      }
+      // Never mutate the slot during the renderer's commit phase.
+      if (reviveTimer !== undefined) clearTimeout(reviveTimer);
+      reviveTimer = setTimeout(() => {
+        reviveTimer = undefined;
+        pending = false;
+        const previous = dispose;
+        try {
+          previous();
+        } catch {
+          /* already disposed */
+        }
+        dispose = register(() => revive(timing().unresolvedDelayMs));
+        armStableWindow();
+      }, delayMs);
+    };
+
+    dispose = register(() => revive(timing().unresolvedDelayMs));
     armStableWindow();
 
     const off =
       typeof ctx.slots.onEntryError === "function"
         ? ctx.slots.onEntryError((key: string, entry: any, _error: unknown, info: any) => {
             if (key !== SLOT_KEY || info?.abdicated !== true) return;
-            if (entry?.options?.id !== ENTRY_ID || revives >= MAX_REVIVES_PER_WINDOW) return;
-            revives += 1;
-            if (stableTimer !== undefined) {
-              clearTimeout(stableTimer);
-              stableTimer = undefined;
-            }
-            const previous = dispose;
-            // Defer out of the renderer's commit phase before mutating the slot.
-            queueMicrotask(() => {
-              try {
-                previous();
-              } catch {
-                /* already disposed */
-              }
-              dispose = register();
-              armStableWindow();
-            });
+            if (entry?.options?.id !== ENTRY_ID) return;
+            revive(timing().crashDelayMs);
           })
         : undefined;
 
     return () => {
       off?.();
       if (stableTimer !== undefined) clearTimeout(stableTimer);
+      if (reviveTimer !== undefined) clearTimeout(reviveTimer);
       dispose();
     };
   });

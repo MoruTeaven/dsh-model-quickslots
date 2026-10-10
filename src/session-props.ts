@@ -30,9 +30,10 @@ export const EMPTY_STORE: DirectoryStore = {
 };
 
 /**
- * Never hand a broken or not-yet-ready store to the renderer. A getSnapshot
- * that throws (or returns undefined) crashes the slot entry, and a crashed
- * list-slot entry is retired for the rest of the page.
+ * Never hand a broken store to the renderer. A `getSnapshot` that throws (or
+ * returns undefined) crashes the slot entry, and a crashed list-slot entry is
+ * retired for the rest of the page — so every store crossing this boundary is
+ * wrapped to make its failures inert.
  */
 export function safeStore(store: DirectoryStore | null | undefined): DirectoryStore {
   if (!store || typeof store.subscribe !== "function" || typeof store.getSnapshot !== "function") {
@@ -57,7 +58,7 @@ export function safeStore(store: DirectoryStore | null | undefined): DirectorySt
   };
 }
 
-/** Inert props for a session whose model directory cannot be resolved. */
+/** Inert props for a session whose model directory cannot be resolved yet. */
 export function unavailableProps(): EntryProps {
   return {
     available: false,
@@ -73,19 +74,26 @@ export function unavailableProps(): EntryProps {
  * Resolving the session's model directory can throw while its scope is not (or
  * no longer) retained: a cold-boot race, a live plugin reload tearing scopes
  * down, or an addressed subagent session. A throw from a slot `inject` factory
- * is fatal — the renderer retires the entry (list-slot abdication has no
- * recovery path), so the buttons stay gone until the plugin is toggled off and
- * on. Fall back to inert props instead of throwing.
+ * is fatal — the renderer retires the entry, and list-slot abdication has no
+ * recovery path, so the buttons stayed gone until the plugin was toggled off
+ * and on. Degrade to inert props instead.
+ *
+ * The entry's inject result is cached per (entry, session binding), so inert
+ * props would otherwise stick for the life of that binding. `onUnresolved` is
+ * therefore asked to re-register the entry later, which re-runs inject against
+ * a freshly resolved directory.
  */
 export function buildEntryProps(
   directoryFor: (sessionId: string) => DirectoryLike,
   isAddressedSubagent: (sessionId: string) => boolean,
   sessionId: string,
+  onUnresolved?: () => void,
 ): EntryProps {
   let directory: DirectoryLike;
   try {
     directory = directoryFor(sessionId);
   } catch {
+    onUnresolved?.();
     return unavailableProps();
   }
   let available = true;
