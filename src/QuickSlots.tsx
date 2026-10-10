@@ -26,6 +26,21 @@ export function QuickSlots({ available, selectModel, directoryStore, loadDirecto
 
   useEffect(() => { loadDirectory(); }, [loadDirectory]);
 
+  // Button text. A custom label always wins; otherwise prefer the catalog's
+  // display name for the model ("DeepSeek-V41-Flash") over the raw
+  // "provider/model" pair, which is long and gets truncated in the row.
+  const labelOf = useCallback((p: Preset) => {
+    if (p.label) return p.label;
+    for (const g of snapshot.groups ?? []) {
+      if (g.id !== p.provider) continue;
+      for (const m of g.models) {
+        if (m.id === p.model) return m.name;
+      }
+    }
+    const tail = p.model.split("/").pop();
+    return tail || p.model;
+  }, [snapshot.groups]);
+
   const isPresetActive = useCallback((p: Preset) => {
     const c = snapshot.current;
     if (!c) return false;
@@ -100,7 +115,7 @@ export function QuickSlots({ available, selectModel, directoryStore, loadDirecto
           disabled={!available}
           type="button"
         >
-          {p.label || (p.provider + "/" + p.model)}
+          {labelOf(p)}
         </button>
       ))}
       <button

@@ -39,7 +39,7 @@ export function EditDialog({ preset, snapshot, onSave, onDelete, onClose }: Edit
     if (!provider || !model) return;
     onSave({
       id: preset?.id ?? genId(),
-      label: label.trim() || provider + "/" + model,
+      label: label.trim() || selectedModel?.name || model,
       provider,
       model,
       reasoningEffort: effort || undefined,

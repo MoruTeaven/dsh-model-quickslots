@@ -19,6 +19,16 @@ A row of one-click model preset buttons for the [DeepSeek Harness](https://githu
 - **Local persistence** — presets are stored in the browser's `localStorage`; no account or sync service involved.
 - **Theme aware** — styled with DSH theme variables, so it follows light and dark themes.
 
+## Screenshots
+
+Preset buttons sit right above the composer, aligned with the input card:
+
+![Preset buttons above the composer](docs/preset-row.jpg)
+
+Right-click a preset to edit it — the dropdowns come from your live model catalog:
+
+![Editing a preset](docs/edit-dialog.png)
+
 ## Installation
 
 ### From npm (recommended)
