@@ -36,7 +36,7 @@ export const CSS = `
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   user-select: none;
   white-space: nowrap;
-  max-width: 177px;
+  max-width: 247px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

@@ -30,15 +30,18 @@ export function QuickSlots({ available, selectModel, directoryStore, loadDirecto
   // display name for the model ("DeepSeek-V41-Flash") over the raw
   // "provider/model" pair, which is long and gets truncated in the row.
   const labelOf = useCallback((p: Preset) => {
-    if (p.label) return p.label;
+    // Presets saved by earlier versions baked in "provider/model" as their
+    // label. Treat that (and an empty label) as "no custom name" and derive a
+    // short one, so long pairs never get truncated in the row.
+    const isAuto = !p.label || p.label === p.provider + "/" + p.model;
+    if (!isAuto) return p.label;
     for (const g of snapshot.groups ?? []) {
       if (g.id !== p.provider) continue;
       for (const m of g.models) {
         if (m.id === p.model) return m.name;
       }
     }
-    const tail = p.model.split("/").pop();
-    return tail || p.model;
+    return p.model.split("/").pop() || p.model;
   }, [snapshot.groups]);
 
   const isPresetActive = useCallback((p: Preset) => {

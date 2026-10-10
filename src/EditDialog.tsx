@@ -39,7 +39,9 @@ export function EditDialog({ preset, snapshot, onSave, onDelete, onClose }: Edit
     if (!provider || !model) return;
     onSave({
       id: preset?.id ?? genId(),
-      label: label.trim() || selectedModel?.name || model,
+      // Empty label means "auto" — QuickSlots derives the display name
+      // from the live catalog, so it stays correct if the model is renamed.
+      label: label.trim(),
       provider,
       model,
       reasoningEffort: effort || undefined,
@@ -76,7 +78,7 @@ export function EditDialog({ preset, snapshot, onSave, onDelete, onClose }: Edit
               className="dsh-mqs-field__input"
               value={label}
               onChange={e => setLabel(e.target.value)}
-              placeholder="自定义名称（可选）"
+              placeholder={selectedModel ? selectedModel.name + "（默认）" : "自定义名称（可选）"}
               type="text"
               autoFocus
             />
