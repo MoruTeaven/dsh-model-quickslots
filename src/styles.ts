@@ -1,12 +1,23 @@
 /** Injected CSS — uses DSH theme CSS variables with sensible fallbacks. */
 export const CSS = `
+/* Align with the composer card: DSH's own dock entries (queue, todo) use the
+   same width constraint, so the row's right edge lines up with the input box
+   instead of the window edge. */
 .dsh-mqs-row {
+  box-sizing: border-box;
+  width: calc(
+    100%
+    - var(--dsh-composer-side-clearance, 16px) - var(--dsh-composer-side-clearance, 16px)
+    - var(--dsh-composer-dock-inset, 8px) - var(--dsh-composer-dock-inset, 8px)
+  );
+  max-width: calc(var(--dsh-composer-card-max-width, 100%) - var(--dsh-composer-dock-inset, 8px) - var(--dsh-composer-dock-inset, 8px));
+  margin: 0 auto;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 4px;
-  padding: 2px 0;
   flex-wrap: wrap;
+  flex: none;
   font-family: var(--dsw-font-family, inherit);
 }
 
