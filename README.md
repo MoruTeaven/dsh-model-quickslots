@@ -47,12 +47,12 @@ pnpm build
 
 - **左键点击**按钮 → 切换到该预设的模型配置
 - **右键点击**按钮 → 打开编辑弹窗
-- 点击 **+** 按钮 → 添加新预设
+- 点击 **+** 按钮 → 添加新预设（还没有任何预设时，按钮显示为「模型预设」）
 
 ## 技术细节
 
 - 纯客户端 Web 插件，注册到 `conversation.input.dock` 扩展位
-- 模型切换通过 `session.selectModel` API 实现
+- 模型切换复用 DSH 内置的模型目录服务（`modelDirectories`），与内置模型选择器行为一致
 - 图标使用 [Lucide](https://lucide.dev)（ISC 协议）的 SVG 路径
 - 样式使用 DSH 主题 CSS 变量，自动适配亮/暗主题
 

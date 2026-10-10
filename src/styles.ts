@@ -47,8 +47,23 @@ export const CSS = `
 }
 
 .dsh-mqs-btn--add {
-  padding: 3px 5px;
-  color: var(--dsw-alias-label-dimmed, #a0a0a0);
+  padding: 3px 7px;
+  color: var(--dsw-alias-label-tertiary, #8e8e8e);
+  border-color: var(--dsw-alias-border-l, rgba(0, 0, 0, 0.12));
+}
+
+.dsh-mqs-btn__label {
+  font-size: 12px;
+}
+
+.dsh-mqs-btn--failed {
+  color: var(--dsw-alias-state-error-primary, #dc2626);
+  border-color: var(--dsw-alias-state-error-primary, #dc2626);
+}
+
+.dsh-mqs-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ── Edit dialog ── */

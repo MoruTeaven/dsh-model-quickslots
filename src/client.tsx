@@ -3,9 +3,9 @@ import type { ModelSelection, DirectoryStore } from "./types";
 
 /**
  * Services this plugin waits for:
- * - sessions     → session.selectModel RPC
- * - slots        → conversation.input.dock registration
- * - modelDirectories → per-session model catalog store
+ * - sessions         → subagent-address probe (availability)
+ * - slots            → conversation.input.dock registration
+ * - modelDirectories → per-session model catalog + selection service
  */
 const inject = ["sessions", "slots", "modelDirectories"];
 
@@ -21,11 +21,16 @@ function apply(ctx: any) {
         order: 0,
         inject: (sessionId: string) => {
           const directory = models.directoryFor(sessionId);
+          // Addressed subagent sessions have no Agent-bound model RPC.
+          const available = sessions.subagentAddress(sessionId) === undefined;
           return {
+            available,
             selectModel: (selection: ModelSelection) =>
-              sessions.selectModel({ sessionId, ...selection }),
+              available ? directory.select(selection) : Promise.resolve(undefined),
             directoryStore: directory.store as DirectoryStore,
-            loadDirectory: () => { directory.load().catch(() => {}); },
+            loadDirectory: () => {
+              if (available) directory.load().catch(() => {});
+            },
           };
         },
       },

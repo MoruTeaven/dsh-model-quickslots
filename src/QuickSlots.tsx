@@ -1,6 +1,6 @@
 import { useState, useEffect, useSyncExternalStore, useCallback } from "react";
 import type { MouseEvent } from "react";
-import type { Preset, ModelSelection, DirectoryStore } from "./types";
+import type { Preset, ModelSelection, DirectoryStore, SelectionResult } from "./types";
 import { loadPresets, savePresets, genId } from "./storage";
 import { injectStyles } from "./styles";
 import { PlusIcon } from "./icons";
@@ -10,14 +10,16 @@ injectStyles();
 
 interface QuickSlotsProps {
   sessionId: string;
-  selectModel: (selection: ModelSelection) => Promise<unknown>;
+  available: boolean;
+  selectModel: (selection: ModelSelection) => Promise<SelectionResult | undefined>;
   directoryStore: DirectoryStore;
   loadDirectory: () => void;
 }
 
-export function QuickSlots({ selectModel, directoryStore, loadDirectory }: QuickSlotsProps) {
+export function QuickSlots({ available, selectModel, directoryStore, loadDirectory }: QuickSlotsProps) {
   const [presets, setPresets] = useState<Preset[]>(() => loadPresets());
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [failedId, setFailedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ preset: Preset | null } | null>(null);
 
   const snapshot = useSyncExternalStore(directoryStore.subscribe, directoryStore.getSnapshot);
@@ -33,15 +35,22 @@ export function QuickSlots({ selectModel, directoryStore, loadDirectory }: Quick
   }, [snapshot.current]);
 
   const handleClick = useCallback(async (p: Preset) => {
+    if (!available) return;
     setPendingId(p.id);
+    setFailedId(null);
     try {
-      await selectModel({ provider: p.provider, model: p.model, reasoningEffort: p.reasoningEffort });
+      const result = await selectModel({
+        provider: p.provider,
+        model: p.model,
+        reasoningEffort: p.reasoningEffort,
+      });
+      if (result && result.ok === false) setFailedId(p.id);
     } catch {
-      /* selectModel failures are surfaced by DSH itself */
+      setFailedId(p.id);
     } finally {
       setPendingId(null);
     }
-  }, [selectModel]);
+  }, [selectModel, available]);
 
   const handleContextMenu = useCallback((e: MouseEvent, p: Preset) => {
     e.preventDefault();
@@ -79,10 +88,16 @@ export function QuickSlots({ selectModel, directoryStore, loadDirectory }: Quick
             "dsh-mqs-btn"
             + (isPresetActive(p) ? " dsh-mqs-btn--active" : "")
             + (pendingId === p.id ? " dsh-mqs-btn--pending" : "")
+            + (failedId === p.id ? " dsh-mqs-btn--failed" : "")
           }
           onClick={() => handleClick(p)}
           onContextMenu={(e: MouseEvent) => handleContextMenu(e, p)}
-          title={p.provider + "/" + p.model + (p.reasoningEffort ? " · " + p.reasoningEffort : "")}
+          title={
+            p.provider + "/" + p.model
+            + (p.reasoningEffort ? " · " + p.reasoningEffort : "")
+            + (failedId === p.id ? "（切换失败）" : "")
+          }
+          disabled={!available}
           type="button"
         >
           {p.label || (p.provider + "/" + p.model)}
@@ -91,10 +106,11 @@ export function QuickSlots({ selectModel, directoryStore, loadDirectory }: Quick
       <button
         className="dsh-mqs-btn dsh-mqs-btn--add"
         onClick={() => setEditing({ preset: null })}
-        title="添加预设"
+        title={presets.length === 0 ? "添加模型预设" : "添加预设"}
         type="button"
       >
         <PlusIcon size={13} />
+        {presets.length === 0 && <span className="dsh-mqs-btn__label">模型预设</span>}
       </button>
       {editing && (
         <EditDialog

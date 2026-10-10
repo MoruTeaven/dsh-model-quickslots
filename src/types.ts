@@ -51,3 +51,9 @@ export interface DirectoryStore {
   subscribe(cb: () => void): () => void;
   getSnapshot(): CatalogSnapshot;
 }
+
+/** Outcome of a model selection; failures carry the Remote error. */
+export interface SelectionResult {
+  ok: boolean;
+  error?: { code: string; message: string };
+}
