@@ -1,6 +1,6 @@
 {
   "name": "@moruteaven/dsh-model-quickslots",
-  "version": "1.0.1-dev.2",
+  "version": "1.0.1-dev.3",
   "description": "One-click model preset buttons for the DeepSeek Harness (DSH) composer — switch provider, model and reasoning effort instantly.",
   "type": "module",
   "main": "lib/index.js",
@@ -30,7 +30,8 @@
     "build": "node esbuild.config.mjs",
     "dev": "node esbuild.config.mjs --watch",
     "prepare": "node esbuild.config.mjs",
-    "test": "esbuild src/self-test.ts --bundle --format=esm --platform=node --outfile=lib/self-test.mjs && node lib/self-test.mjs"
+    "test": "esbuild src/self-test.ts --bundle --format=esm --platform=node --outfile=lib/self-test.mjs && node lib/self-test.mjs && node test/integration.mjs",
+    "test:integration": "node test/integration.mjs"
   },
   "files": [
     "lib/client.js",
