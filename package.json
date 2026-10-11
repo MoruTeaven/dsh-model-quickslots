@@ -1,6 +1,6 @@
 {
   "name": "@moruteaven/dsh-model-quickslots",
-  "version": "1.0.1-dev.3",
+  "version": "1.0.1",
   "description": "One-click model preset buttons for the DeepSeek Harness (DSH) composer — switch provider, model and reasoning effort instantly.",
   "type": "module",
   "main": "lib/index.js",
