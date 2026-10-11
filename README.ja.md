@@ -5,6 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@moruteaven/dsh-model-quickslots?color=4f46e5)](https://www.npmjs.com/package/@moruteaven/dsh-model-quickslots)
 [![license](https://img.shields.io/npm/l/@moruteaven/dsh-model-quickslots?color=4f46e5)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-plugin-4f46e5)](https://github.com/deepseek-ai)
+[![Gitee](https://img.shields.io/badge/Gitee-%E3%83%9F%E3%83%A9%E3%83%BC-c71d23)](https://gitee.com/moruteaven/dsh-model-quickslots)
 
 [DeepSeek Harness](https://github.com/deepseek-ai)（DSH）の入力欄の上に、モデルをワンクリックで切り替えるプリセットボタンの列を追加します。各ボタンは 1 つのプリセット（プロバイダー + モデル + 思考強度）に対応します。**左クリック**で現在のセッションのモデルを切り替え、**右クリック**で編集ダイアログを開きます。
 
@@ -51,8 +52,15 @@ pnpm add @moruteaven/dsh-model-quickslots
 
 ### ソースからビルド
 
+2 つの公開リポジトリは同期しています。アクセスの速い方を選んでください：
+
 ```bash
+# GitHub
 git clone https://github.com/MoruTeaven/dsh-model-quickslots.git
+
+# Gitee（中国本土向けミラー、アクセスが高速）
+git clone https://gitee.com/moruteaven/dsh-model-quickslots.git
+
 cd dsh-model-quickslots
 pnpm install
 pnpm build

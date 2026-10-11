@@ -5,6 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@moruteaven/dsh-model-quickslots?color=4f46e5)](https://www.npmjs.com/package/@moruteaven/dsh-model-quickslots)
 [![license](https://img.shields.io/npm/l/@moruteaven/dsh-model-quickslots?color=4f46e5)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-plugin-4f46e5)](https://github.com/deepseek-ai)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23)](https://gitee.com/moruteaven/dsh-model-quickslots)
 
 A row of one-click model preset buttons for the [DeepSeek Harness](https://github.com/deepseek-ai) (DSH) composer. Each button is a saved preset — provider + model + reasoning effort. **Left-click** switches the current session's model; **right-click** opens the editor.
 
@@ -51,8 +52,15 @@ Open **Settings → Plugins**, search for `@moruteaven/dsh-model-quickslots`, an
 
 ### From source
 
+Two public mirrors are kept in sync — clone whichever is faster for you:
+
 ```bash
+# GitHub
 git clone https://github.com/MoruTeaven/dsh-model-quickslots.git
+
+# Gitee (mirror, faster in mainland China)
+git clone https://gitee.com/moruteaven/dsh-model-quickslots.git
+
 cd dsh-model-quickslots
 pnpm install
 pnpm build
