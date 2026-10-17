@@ -14,7 +14,7 @@ const SLOT_KEY = "conversation.input.dock";
 /** This plugin's entry id inside that list slot. */
 const ENTRY_ID = "model-quickslots";
 /** Re-registration guard: at most this many revives inside one stable window. */
-const MAX_REVIVES_PER_WINDOW = 3;
+const MAX_REVIVES_PER_WINDOW = 7;
 /** Surviving this long without another revive restores the revive budget. */
 const DEFAULT_STABLE_WINDOW_MS = 10_000;
 /** A crashed entry is replaced promptly; a failed directory lookup gets a beat. */
@@ -36,36 +36,49 @@ function timing() {
   };
 }
 
+/** Result of a register attempt: the disposer, or null when it threw. */
+type RegisterResult = (() => void) | null;
+
 function apply(ctx: any) {
   const sessions = ctx.sessions;
   const models = ctx.modelDirectories;
 
-  const register = (onUnresolved: () => void) =>
-    ctx.slots.register(
-      {
-        name: SLOT_KEY,
-        id: ENTRY_ID,
-        order: 0,
-        inject: (sessionId: string) =>
-          buildEntryProps(
-            (id) => models.directoryFor(id),
-            (id) => sessions.subagentAddress(id) !== undefined,
-            sessionId,
-            onUnresolved,
-          ),
-      },
-      QuickSlots,
-    );
+  const register = (onUnresolved: () => void): RegisterResult => {
+    try {
+      return ctx.slots.register(
+        {
+          name: SLOT_KEY,
+          id: ENTRY_ID,
+          order: 0,
+          inject: (sessionId: string) =>
+            buildEntryProps(
+              (id) => models.directoryFor(id),
+              (id) => sessions.subagentAddress(id) !== undefined,
+              sessionId,
+              onUnresolved,
+            ),
+        },
+        QuickSlots,
+      );
+    } catch {
+      // SlotCore.register throws when a same-id entry still occupies the cell
+      // (cold-boot race: the previous declaration's dispose hasn't settled when
+      // the new declaration epoch fires reconcile). Without this catch the throw
+      // bubbles into SlotRegistry.inject's error handler, which calls stop() —
+      // permanently killing the injection for the page lifetime.
+      return null;
+    }
+  };
 
   ctx.slots.inject(SLOT_KEY, () => {
-    let dispose: () => void = () => {};
+    let dispose: RegisterResult = null;
     let revives = 0;
     let pending = false;
     let stableTimer: ReturnType<typeof setTimeout> | undefined;
     let reviveTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // Two failure modes lead here, and both used to require toggling the plugin
-    // off and on:
+    // Three failure modes lead here, all previously requiring toggling the
+    // plugin off and on:
     //
     //  1. The entry crashed while rendering. The renderer retires ("abdicates")
     //     a crashed list-slot entry with no recovery path, so the row vanished
@@ -73,10 +86,14 @@ function apply(ctx: any) {
     //  2. Resolving the session's model directory failed, so the entry fell back
     //     to inert props — and inject results are cached per session binding, so
     //     it never got another chance.
+    //  3. register() itself threw because the slot's declaration epoch advanced
+    //     (another plugin loading) before the previous entry's dispose settled.
+    //     Without catching this, SlotRegistry.inject's error handler calls
+    //     stop() — permanently killing the injection for the page lifetime.
     //
-    // Re-registering the entry fixes both: a fresh entry re-runs inject against
-    // a freshly resolved directory. The budget is per stable window, not
-    // cumulative, so a one-off fault heals and then forgets while a genuine
+    // Re-registering the entry fixes all three: a fresh entry re-runs inject
+    // against a freshly resolved directory. The budget is per stable window,
+    // not cumulative, so a one-off fault heals and then forgets while a genuine
     // loop still stops after MAX_REVIVES_PER_WINDOW tries.
     const armStableWindow = () => {
       if (stableTimer !== undefined) clearTimeout(stableTimer);
@@ -99,19 +116,29 @@ function apply(ctx: any) {
       reviveTimer = setTimeout(() => {
         reviveTimer = undefined;
         pending = false;
-        const previous = dispose;
-        try {
-          previous();
-        } catch {
-          /* already disposed */
+        // Dispose the previous entry (if any) before re-registering.
+        if (dispose) {
+          try { dispose(); } catch { /* already disposed */ }
         }
         dispose = register(() => revive(timing().unresolvedDelayMs));
-        armStableWindow();
+        // If register returned null (threw internally), schedule another revive
+        // to retry. Otherwise, the entry is live — arm the stable window.
+        if (dispose === null && revives < MAX_REVIVES_PER_WINDOW) {
+          revive(timing().unresolvedDelayMs);
+        } else {
+          armStableWindow();
+        }
       }, delayMs);
     };
 
     dispose = register(() => revive(timing().unresolvedDelayMs));
-    armStableWindow();
+    // If the initial register threw, kick off a revive immediately instead of
+    // waiting for an onEntryError or onUnresolved callback that may never fire.
+    if (dispose === null) {
+      revive(timing().unresolvedDelayMs);
+    } else {
+      armStableWindow();
+    }
 
     const off =
       typeof ctx.slots.onEntryError === "function"
@@ -126,7 +153,7 @@ function apply(ctx: any) {
       off?.();
       if (stableTimer !== undefined) clearTimeout(stableTimer);
       if (reviveTimer !== undefined) clearTimeout(reviveTimer);
-      dispose();
+      dispose?.();
     };
   });
 }

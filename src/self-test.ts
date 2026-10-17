@@ -52,6 +52,23 @@ assert.strictEqual(isActive({ ...preset, model: "other" }, preset), false);
 assert.strictEqual(isActive(null, preset), false);
 assert.strictEqual(isActive({ ...preset, reasoningEffort: "high" }, { ...preset, reasoningEffort: undefined }), false);
 
+// Test 6: drag reorder (splice-based, same logic as handleDrop)
+function reorder<T>(arr: T[], from: number, to: number): T[] {
+  const next = [...arr];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+const dragBefore: Preset[] = [
+  { id: "a", label: "A", provider: "p", model: "m" },
+  { id: "b", label: "B", provider: "p", model: "m" },
+  { id: "c", label: "C", provider: "p", model: "m" },
+];
+assert.deepStrictEqual(reorder(dragBefore, 0, 2).map(p => p.id), ["b", "c", "a"]);
+assert.deepStrictEqual(reorder(dragBefore, 2, 0).map(p => p.id), ["c", "a", "b"]);
+assert.deepStrictEqual(reorder(dragBefore, 1, 1).map(p => p.id), ["a", "b", "c"]);
+assert.deepStrictEqual(dragBefore.map(p => p.id), ["a", "b", "c"]); // original untouched
+
 // ── session-props: the dock entry must never throw while building props ──
 
 function makeDirectory(overrides: Partial<any> = {}) {
@@ -66,28 +83,28 @@ function makeDirectory(overrides: Partial<any> = {}) {
   } as any;
 }
 
-// Test 6: an unresolvable session yields inert, non-throwing props
+// Test 7: an unresolvable session yields inert, non-throwing props
 let props = buildEntryProps(() => { throw new Error("session resolved no scope"); }, () => false, "s1");
 assert.strictEqual(props.available, false);
 assert.strictEqual(props.directoryStore, EMPTY_STORE);
 assert.strictEqual(await props.selectModel({ provider: "p", model: "m" }), undefined);
 props.loadDirectory(); // must not throw
 
-// Test 7: a healthy session resolves normally
+// Test 8: a healthy session resolves normally
 props = buildEntryProps(() => makeDirectory(), () => false, "s2");
 assert.strictEqual(props.available, true);
 assert.deepStrictEqual(await props.selectModel({ provider: "p", model: "m" }), { ok: true });
 
-// Test 8: addressed subagent sessions stay inert but resolvable
+// Test 9: addressed subagent sessions stay inert but resolvable
 props = buildEntryProps(() => makeDirectory(), () => true, "s3");
 assert.strictEqual(props.available, false);
 assert.strictEqual(await props.selectModel({ provider: "p", model: "m" }), undefined);
 
-// Test 9: an address probe that throws degrades instead of crashing the entry
+// Test 10: an address probe that throws degrades instead of crashing the entry
 props = buildEntryProps(() => makeDirectory(), () => { throw new Error("probe failed"); }, "s4");
 assert.strictEqual(props.available, false);
 
-// Test 10: a store whose getSnapshot throws is wrapped, never surfaced
+// Test 11: a store whose getSnapshot throws is wrapped, never surfaced
 const hostile: DirectoryStore = {
   subscribe: () => () => {},
   getSnapshot: () => { throw new Error("boom"); },
@@ -98,12 +115,12 @@ const unsubscribe = wrapped.subscribe(() => {});
 assert.strictEqual(typeof unsubscribe, "function");
 unsubscribe();
 
-// Test 11: safeStore tolerates null/undefined/malformed handles
+// Test 12: safeStore tolerates null/undefined/malformed handles
 assert.strictEqual(safeStore(null), EMPTY_STORE);
 assert.strictEqual(safeStore(undefined), EMPTY_STORE);
 assert.strictEqual(safeStore({} as any), EMPTY_STORE);
 
-// Test 12: a store whose subscribe throws still yields a usable unsubscribe
+// Test 13: a store whose subscribe throws still yields a usable unsubscribe
 const badSubscribe = safeStore({
   subscribe: () => { throw new Error("nope"); },
   getSnapshot: () => ({ groups: [], current: null, status: "ready" }),
@@ -112,7 +129,7 @@ const off = badSubscribe.subscribe(() => {});
 assert.strictEqual(typeof off, "function");
 off();
 
-// Test 13: a synchronous load() failure does not escape the entry
+// Test 14: a synchronous load() failure does not escape the entry
 props = buildEntryProps(
   () => makeDirectory({ load: () => { throw new Error("sync load failed"); } }),
   () => false,
@@ -120,7 +137,7 @@ props = buildEntryProps(
 );
 props.loadDirectory(); // must not throw
 
-// Test 14: a rejected load() is swallowed (no unhandled rejection)
+// Test 15: a rejected load() is swallowed (no unhandled rejection)
 props = buildEntryProps(
   () => makeDirectory({ load: () => Promise.reject(new Error("async load failed")) }),
   () => false,
@@ -128,8 +145,8 @@ props = buildEntryProps(
 );
 props.loadDirectory();
 
-// Test 15: the wrapped snapshot keeps identity while the source is stable
+// Test 16: the wrapped snapshot keeps identity while the source is stable
 const stable = safeStore({ subscribe: () => () => {}, getSnapshot: () => EMPTY_SNAPSHOT } as any);
 assert.strictEqual(stable.getSnapshot(), stable.getSnapshot());
 
-console.log("self-test passed — all 15 checks OK");
+console.log("self-test passed — all 16 checks OK");

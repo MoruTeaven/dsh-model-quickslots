@@ -72,6 +72,15 @@ export const CSS = `
   border-color: var(--dsw-alias-state-error-primary, #dc2626);
 }
 
+.dsh-mqs-btn--dragging {
+  opacity: 0.4;
+}
+
+.dsh-mqs-btn--drag-over {
+  border-color: var(--dsw-alias-state-business-primary, #4f46e5);
+  border-style: dashed;
+}
+
 .dsh-mqs-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

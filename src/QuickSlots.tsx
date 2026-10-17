@@ -1,5 +1,5 @@
 import { useState, useEffect, useSyncExternalStore, useCallback } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, DragEvent } from "react";
 import type { Preset, ModelSelection, DirectoryStore, SelectionResult } from "./types";
 import { loadPresets, savePresets, genId } from "./storage";
 import { injectStyles } from "./styles";
@@ -21,6 +21,8 @@ export function QuickSlots({ available, selectModel, directoryStore, loadDirecto
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [failedId, setFailedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ preset: Preset | null } | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const snapshot = useSyncExternalStore(directoryStore.subscribe, directoryStore.getSnapshot);
 
@@ -97,16 +99,45 @@ export function QuickSlots({ available, selectModel, directoryStore, loadDirecto
     setEditing(null);
   }, []);
 
+  const handleDragStart = useCallback((i: number) => setDragIndex(i), []);
+  const handleDragOver = useCallback((e: DragEvent, i: number) => {
+    e.preventDefault(); // allow drop
+    setDragOverIndex(i);
+  }, []);
+  const handleDrop = useCallback((i: number) => {
+    setDragOverIndex(null);
+    if (dragIndex === null || dragIndex === i) { setDragIndex(null); return; }
+    setPresets(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(i, 0, moved);
+      savePresets(next);
+      return next;
+    });
+    setDragIndex(null);
+  }, [dragIndex]);
+  const handleDragEnd = useCallback(() => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }, []);
+
   return (
     <div className="dsh-mqs-row">
-      {presets.map(p => (
+      {presets.map((p, i) => (
         <button
           key={p.id}
+          draggable
+          onDragStart={() => handleDragStart(i)}
+          onDragOver={(e: DragEvent) => handleDragOver(e, i)}
+          onDrop={() => handleDrop(i)}
+          onDragEnd={handleDragEnd}
           className={
             "dsh-mqs-btn"
             + (isPresetActive(p) ? " dsh-mqs-btn--active" : "")
             + (pendingId === p.id ? " dsh-mqs-btn--pending" : "")
             + (failedId === p.id ? " dsh-mqs-btn--failed" : "")
+            + (dragIndex === i ? " dsh-mqs-btn--dragging" : "")
+            + (dragOverIndex === i && dragIndex !== null && dragIndex !== i ? " dsh-mqs-btn--drag-over" : "")
           }
           onClick={() => handleClick(p)}
           onContextMenu={(e: MouseEvent) => handleContextMenu(e, p)}
